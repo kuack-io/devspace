@@ -1,0 +1,142 @@
+# https://www.devspace.sh/docs/configuration/reference
+version: v2beta1
+name: kuack
+require:
+  devspace: '>= 6.3, < 7.0'
+
+vars:
+  K3D_REGISTRY_EXTERNAL: k3d-registry.localhost:5000
+  K3D_REGISTRY: k3d-registry:5000
+
+localRegistry:
+  enabled: false
+
+pipelines:
+  dev:
+    run: |-
+      start_dev --all
+  deploy:
+    run: |-
+      create_deployments --all
+      echo "=========================================="
+      echo "Kuack Node can be accessed at ws://kuack-node.localhost:8077"
+      echo "Kuack Agent UI is available at http://kuack-agent.localhost:8077"
+      echo "=========================================="
+
+deployments:
+  kuack:
+    helm:
+      chart:
+        name: oci://ghcr.io/kuack-io/charts/kuack
+      valuesFiles:
+        - values.yml
+      displayOutput: true
+      upgradeArgs:
+        - "--timeout"
+        - "2m"
+
+dev:
+  node:
+    labelSelector:
+      app.kubernetes.io/name: kuack-node
+    command: ["go", "run", "."]
+    patches:
+      - op: replace
+        path: spec.containers[0].image
+        value: golang:1.25
+      - op: add
+        path: spec.containers[0].workingDir
+        value: /app
+    env:
+      - name: GOCACHE
+        value: /root/.cache/go-build
+      - name: GOMODCACHE
+        value: /go/pkg/mod
+    persistPaths:
+      - path: /go/pkg/mod
+      - path: /root/.cache/go-build
+    sync:
+      - path: ../node:/app
+        disableDownload: true
+        polling: true
+        excludePaths:
+          - "**/*"
+          - "!main.go"
+          - "!pkg/**"
+          - "!go.mod"
+          - "!go.sum"
+        onUpload:
+          restartContainer: true
+  agent:
+    labelSelector:
+      app.kubernetes.io/name: kuack-agent
+    patches:
+      - op: replace
+        path: spec.containers[0].image
+        value: node:20-alpine
+      - op: add
+        path: spec.containers[0].workingDir
+        value: /app
+      - op: replace
+        path: spec.containers[0].securityContext
+        value:
+          runAsUser: 0
+          runAsGroup: 0
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
+      - op: replace
+        path: spec.securityContext
+        value:
+          runAsUser: 0
+          runAsNonRoot: false
+          fsGroup: 0
+    env:
+      - name: PORT
+        value: "8080"
+      - name: HOST
+        value: "0.0.0.0" # required to accept external connections in containers
+    command: ["sh", "-c", "while [ ! -f /app/package.json ]; do echo 'Waiting for package.json...'; sleep 1; done && npm install && npm run dev"]
+    persistPaths:
+      - path: /app/node_modules
+    sync:
+      - path: ../agent:/app
+        excludePaths:
+          - "**/*"
+          - "!src/**"
+          - "!package.json"
+          - "!package-lock.json"
+          - "!tsconfig.json"
+          - "!vite.config.ts"
+          - "!vitest.config.ts"
+          - "!setupTests.ts"
+          - "!index.html"
+          - "!eslint.config.js"
+        # For Go, we restart the container to recompile.
+        # For JS/TS, the dev server has built-in "Hot Reloading" (HMR).
+        # We sync the file, the dev server sees it and updates the browser instantly.
+        onUpload:
+          restartContainer: false
+
+hooks:
+  - name: wait-for-node
+    wait:
+      running: true
+      timeout: 120
+    container:
+      labelSelector:
+        app.kubernetes.io/name: kuack-node
+    events:
+      - after:deploy:kuack
+  - name: wait-for-agent
+    wait:
+      running: true
+      timeout: 120
+    container:
+      labelSelector:
+        app.kubernetes.io/name: kuack-agent
+    events:
+      - after:deploy:kuack
