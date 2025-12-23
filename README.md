@@ -16,7 +16,7 @@ Development environment configuration for kuack using DevSpace and k3d.
 Create a k3d cluster with port forwarding for ingress
 
 ```bash
-k3d cluster create kuack -p "8077:80@loadbalancer"
+k3d cluster create kuack --agents 2 --port "8077:80@loadbalancer"
 ```
 
 **Note:** docker commands may require `sudo` depending on your system configuration. If that's the case, then use `sudo` for `k3d` commands as well.
@@ -24,7 +24,7 @@ k3d cluster create kuack -p "8077:80@loadbalancer"
 Merge/import cluster config:
 
 ```bash
-k3d kubeconfig get kuack > ~/.kube/config
+k3d kubeconfig merge kuack --output ~/.kube/config
 ```
 
 Or, if that's your first cluster:
@@ -34,7 +34,7 @@ mkdir -p ~/.kube/
 k3d kubeconfig get kuack > ~/.kube/config
 ```
 
-**Important:** The `-p "8077:80@loadbalancer"` flag maps port 8077 on your host to port 80 on the k3d loadbalancer, allowing you to access ingress resources at `http://localhost:8077` (or `https://localhost:8077` if TLS is configured).
+**Important:** The `--port "8077:80@loadbalancer"` flag maps port 8077 on your host to port 80 on the k3d loadbalancer, allowing you to access ingress resources at `http://localhost:8077` (or `https://localhost:8077` if TLS is configured).
 
 ### Switch Context
 
@@ -60,7 +60,7 @@ devspace deploy
 ### Access the Application
 
 After deployment, access the application via <http://kuack-agent.localhost:8077>.
-Use <ws://kuack-node.localhost:8077> as a target.
+Use <http://kuack-node.localhost:8077> as a target.
 
 ### Development Mode
 
@@ -71,3 +71,5 @@ Start development mode with hot-reload:
 ```bash
 devspace dev
 ```
+
+Be patient, it make take some time for the apps to download dependencies and recompile.

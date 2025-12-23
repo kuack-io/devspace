@@ -47,20 +47,40 @@ dev:
       - op: add
         path: spec.containers[0].workingDir
         value: /app
+      - op: replace
+        path: spec.containers[0].securityContext
+        value:
+          runAsUser: 0
+          runAsGroup: 0
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
+      - op: replace
+        path: spec.securityContext
+        value:
+          runAsUser: 0
+          runAsNonRoot: false
+          fsGroup: 0
+      - op: remove
+        path: spec.containers[0].resources
     env:
       - name: GOCACHE
         value: /root/.cache/go-build
       - name: GOMODCACHE
         value: /go/pkg/mod
+      - name: GOPROXY
+        value: https://proxy.golang.org,direct
     persistPaths:
       - path: /go/pkg/mod
       - path: /root/.cache/go-build
     sync:
       - path: ../node:/app
         disableDownload: true
-        polling: true
         excludePaths:
-          - "**/*"
+          - "**"
           - "!main.go"
           - "!pkg/**"
           - "!go.mod"
@@ -94,6 +114,8 @@ dev:
           runAsUser: 0
           runAsNonRoot: false
           fsGroup: 0
+      - op: remove
+        path: spec.containers[0].resources
     env:
       - name: PORT
         value: "8080"
@@ -104,8 +126,9 @@ dev:
       - path: /app/node_modules
     sync:
       - path: ../agent:/app
+        disableDownload: true
         excludePaths:
-          - "**/*"
+          - "**"
           - "!src/**"
           - "!package.json"
           - "!package-lock.json"
@@ -115,6 +138,10 @@ dev:
           - "!setupTests.ts"
           - "!index.html"
           - "!eslint.config.js"
+        # excludePaths excludes files from sync, but can't prevent directories from being created or managed by sync.
+        uploadExcludePaths:
+          - "node_modules"
+          - "node_modules/**"
         # For Go, we restart the container to recompile.
         # For JS/TS, the dev server has built-in "Hot Reloading" (HMR).
         # We sync the file, the dev server sees it and updates the browser instantly.
