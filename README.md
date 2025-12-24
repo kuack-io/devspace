@@ -21,19 +21,6 @@ k3d cluster create kuack --agents 2 --port "8077:80@loadbalancer"
 
 **Note:** docker commands may require `sudo` depending on your system configuration. If that's the case, then use `sudo` for `k3d` commands as well.
 
-Merge/import cluster config:
-
-```bash
-k3d kubeconfig merge kuack --output ~/.kube/config
-```
-
-Or, if that's your first cluster:
-
-```bash
-mkdir -p ~/.kube/
-k3d kubeconfig get kuack > ~/.kube/config
-```
-
 **Important:** The `--port "8077:80@loadbalancer"` flag maps port 8077 on your host to port 80 on the k3d loadbalancer, allowing you to access ingress resources at `http://localhost:8077` (or `https://localhost:8077` if TLS is configured).
 
 ### Switch Context
@@ -41,14 +28,14 @@ k3d kubeconfig get kuack > ~/.kube/config
 Switch `kubectl` context to the new cluster:
 
 ```bash
-kubectl config set-context k3d-kuack
+kubectl config use-context k3d-kuack
 ```
 
 Create new namespace and switch to it:
 
 ```bash
 kubectl create namespace kuack
-kubectl config set-context k3d-kuack --namespace kuack
+kubectl config set-context --current --namespace=kuack
 ```
 
 ### Deploy with DevSpace
