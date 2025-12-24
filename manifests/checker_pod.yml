@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: checker
+spec:
+  nodeSelector:
+    kuack.io/node-type: kuack-node
+  tolerations:
+    - key: "kuack.io/provider"
+      operator: "Equal"
+      value: "kuack"
+      effect: "NoSchedule"
+  containers:
+    - name: checker
+      image: ghcr.io/kuack-io/checker:latest
