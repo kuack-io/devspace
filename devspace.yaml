@@ -7,6 +7,22 @@ require:
 vars:
   K3D_REGISTRY_EXTERNAL: k3d-registry.localhost:5000
   K3D_REGISTRY: k3d-registry:5000
+  CHART_SOURCE:
+    question: "Which chart source to use?"
+    options:
+      - "official"
+      - "local"
+    default: "official"
+
+profiles:
+  - name: local-chart
+    activation:
+      - vars:
+          CHART_SOURCE: "local"
+    patches:
+      - op: replace
+        path: deployments.kuack.helm.chart.name
+        value: ../helm
 
 localRegistry:
   enabled: false
