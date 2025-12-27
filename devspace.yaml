@@ -5,8 +5,6 @@ require:
   devspace: '>= 6.3, < 7.0'
 
 vars:
-  K3D_REGISTRY_EXTERNAL: k3d-registry.localhost:5000
-  K3D_REGISTRY: k3d-registry:5000
   CHART_SOURCE:
     question: "Which chart source to use?"
     options:
@@ -35,8 +33,12 @@ pipelines:
     run: |-
       create_deployments --all
       echo "=========================================="
-      echo "Kuack Node can be accessed at ws://kuack-node.localhost:8077"
-      echo "Kuack Agent UI is available at http://kuack-agent.localhost:8077"
+      echo "Expose services locally via port-forwarding:"
+      echo
+      echo "kubectl port-forward svc/kuack-agent 8080:8080"
+      echo "kubectl port-forward svc/kuack-node 8081:8080"
+      echo
+      echo "Alternatively, run 'devspace dev' which automatically forwards these ports"
       echo "=========================================="
 
 deployments:
@@ -44,8 +46,6 @@ deployments:
     helm:
       chart:
         name: oci://ghcr.io/kuack-io/charts/kuack
-      valuesFiles:
-        - values.yml
       displayOutput: true
       upgradeArgs:
         - "--timeout"
@@ -56,6 +56,8 @@ dev:
     labelSelector:
       app.kubernetes.io/name: kuack-node
     command: ["go", "run", "."]
+    ports:
+      - port: 8081:8080
     patches:
       - op: replace
         path: spec.containers[0].image
@@ -106,6 +108,8 @@ dev:
   agent:
     labelSelector:
       app.kubernetes.io/name: kuack-agent
+    ports:
+      - port: 8080:8080
     patches:
       - op: replace
         path: spec.containers[0].image
