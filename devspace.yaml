@@ -46,6 +46,10 @@ deployments:
     helm:
       chart:
         name: oci://ghcr.io/kuack-io/charts/kuack
+      values:
+        node:
+          logging:
+            verbosity: 4
       displayOutput: true
       upgradeArgs:
         - "--timeout"
