@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: checker-cluster
+spec:
+  restartPolicy: Never
+  containers:
+    - name: checker
+      image: ghcr.io/kuack-io/checker:latest
+      env:
+        - name: TARGET_URL
+          value: "https://kuack.io"
