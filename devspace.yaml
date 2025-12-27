@@ -154,6 +154,7 @@ dev:
         excludePaths:
           - "**"
           - "!src/**"
+          - "!static/**"
           - "!package.json"
           - "!package-lock.json"
           - "!tsconfig.json"
