@@ -56,3 +56,11 @@ If you only ran `devspace deploy`, forward the services manually:
 kubectl port-forward svc/kuack-agent 8080:8080
 kubectl port-forward svc/kuack-node 8081:8080
 ```
+
+### Running E2E Tests
+
+Run e2e tests against the `devspace dev` deployment:
+
+```bash
+devspace run e2e
+```
