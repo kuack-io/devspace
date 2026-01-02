@@ -117,7 +117,7 @@ dev:
     patches:
       - op: replace
         path: spec.containers[0].image
-        value: node:20-alpine
+        value: node:24-alpine
       - op: add
         path: spec.containers[0].workingDir
         value: /app
@@ -172,6 +172,16 @@ dev:
         # We sync the file, the dev server sees it and updates the browser instantly.
         onUpload:
           restartContainer: false
+
+commands:
+  e2e:
+    description: "Run e2e tests against devspace deployment"
+    command: |-
+      export AGENT_URL=http://localhost:8080/
+      export NODE_URL=http://localhost:8081/
+      cd ../e2e
+      make test-local
+      make report
 
 hooks:
   - name: wait-for-node
