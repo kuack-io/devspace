@@ -179,6 +179,7 @@ commands:
     command: |-
       export AGENT_URL=http://localhost:8080/
       export NODE_URL=http://localhost:8081/
+      export NODE_NAME=kuack-node
       cd ../e2e
       make test-local
       make report
