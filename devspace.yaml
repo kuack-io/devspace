@@ -86,8 +86,15 @@ dev:
           runAsUser: 0
           runAsNonRoot: false
           fsGroup: 0
-      - op: remove
+      - op: replace
         path: spec.containers[0].resources
+        value:
+          limits:
+            memory: "4Gi"
+            cpu: "4"
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
     env:
       - name: GOCACHE
         value: /root/.cache/go-build
@@ -177,12 +184,12 @@ commands:
   e2e:
     description: "Run e2e tests against devspace deployment"
     command: |-
+      set +e
       export AGENT_URL=http://localhost:8080/
       export NODE_URL=http://localhost:8081/
       export NODE_NAME=kuack-node
       cd ../e2e
-      make test-local
-      make report
+      make test-local; make report
 
 hooks:
   - name: wait-for-node
