@@ -2,7 +2,7 @@
 version: v2beta1
 name: kuack
 require:
-  devspace: '>= 6.3, < 7.0'
+  devspace: ">= 6.3, < 7.0"
 
 vars:
   CHART_SOURCE:
@@ -37,6 +37,7 @@ pipelines:
       echo
       echo "kubectl port-forward svc/kuack-agent 8080:8080"
       echo "kubectl port-forward svc/kuack-node 8081:8080"
+
       echo
       echo "Alternatively, run 'devspace dev' which automatically forwards these ports"
       echo "=========================================="
@@ -116,6 +117,7 @@ dev:
           - "!go.sum"
         onUpload:
           restartContainer: true
+
   agent:
     labelSelector:
       app.kubernetes.io/name: kuack-agent
@@ -152,7 +154,12 @@ dev:
         value: "8080"
       - name: HOST
         value: "0.0.0.0" # required to accept external connections in containers
-    command: ["sh", "-c", "while [ ! -f /app/package.json ]; do echo 'Waiting for package.json...'; sleep 1; done && npm install && npm run dev"]
+    command:
+      [
+        "sh",
+        "-c",
+        "while [ ! -f /app/package.json ]; do echo 'Waiting for package.json...'; sleep 1; done && npm install && npm run dev",
+      ]
     persistPaths:
       - path: /app/node_modules
     sync:
@@ -208,5 +215,14 @@ hooks:
     container:
       labelSelector:
         app.kubernetes.io/name: kuack-agent
+    events:
+      - after:deploy:kuack
+  - name: wait-for-registry
+    wait:
+      running: true
+      timeout: 120
+    container:
+      labelSelector:
+        app.kubernetes.io/name: kuack-registry
     events:
       - after:deploy:kuack
